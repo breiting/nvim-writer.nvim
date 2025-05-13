@@ -3,18 +3,34 @@ local Job = require("plenary.job")
 local M = {}
 
 local function get_visual_selection()
+	local mode = vim.fn.visualmode()
 	local start_pos = vim.fn.getpos("'<")
 	local end_pos = vim.fn.getpos("'>")
 
-	local lines = vim.fn.getline(start_pos[2], end_pos[2])
-	if #lines == 0 then
-		return ""
+	local start_line = start_pos[2]
+	local start_col = start_pos[3]
+	local end_line = end_pos[2]
+	local end_col = end_pos[3]
+
+	local lines = vim.fn.getline(start_line, end_line)
+
+	if mode == "V" then
+		-- Linewise mode
+		return table.concat(lines, "\n"), end_line
+	elseif mode == "\22" then
+		-- Block mode (CTRL-V) – optional, not implemented
+		vim.notify("Block mode currently not supported", vim.log.levels.WARN)
+		return "", end_line
+	else
+		-- Characterwise
+		if #lines == 0 then
+			return "", end_line
+		end
+
+		lines[1] = string.sub(lines[1], start_col)
+		lines[#lines] = string.sub(lines[#lines], 1, end_col)
+		return table.concat(lines, "\n"), end_line
 	end
-
-	lines[1] = string.sub(lines[1], start_pos[3], -1)
-	lines[#lines] = string.sub(lines[#lines], 1, end_pos[3])
-
-	return table.concat(lines, "\n"), end_pos[2]
 end
 
 function M.fix_selection()
@@ -46,7 +62,8 @@ function M.fix_selection()
 		temperature = 0.4,
 	})
 
-	require("writer.status").set_running(true)
+	-- require("writer.status").set_running(true)
+	vim.notify("✍ GPT läuft...", vim.log.levels.INFO, { title = "nvim-writer" })
 
 	Job:new({
 		command = "curl",
@@ -73,14 +90,14 @@ function M.fix_selection()
 				local ok, decoded = pcall(vim.fn.json_decode, output)
 				if not ok or not decoded or not decoded.choices then
 					vim.notify("❌ Problem processing API result", vim.log.levels.ERROR)
-					require("writer.status").set_running(false)
+					-- require("writer.status").set_running(false)
 					return
 				end
 
 				local reply = decoded.choices[1].message.content
 				vim.api.nvim_buf_set_lines(0, end_line, end_line, false, vim.split(reply, "\n"))
 				vim.notify("✅ Done", vim.log.levels.INFO)
-				require("writer.status").set_running(false)
+				-- require("writer.status").set_running(false)
 			end)
 		end,
 	}):start()
