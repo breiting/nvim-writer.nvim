@@ -70,13 +70,13 @@ function M.fix_selection()
 				local output = table.concat(j:result(), "")
 				local ok, decoded = pcall(vim.fn.json_decode, output)
 				if not ok or not decoded or not decoded.choices then
-					vim.notify("❌ Fehler beim Verarbeiten der API-Antwort", vim.log.levels.ERROR)
+					vim.notify("❌ Problem processing API result", vim.log.levels.ERROR)
 					return
 				end
 
 				local reply = decoded.choices[1].message.content
 				vim.api.nvim_buf_set_lines(0, end_line, end_line, false, vim.split(reply, "\n"))
-				vim.notify("✅ Verbesserung eingefügt", vim.log.levels.INFO)
+				vim.notify("✅ Done", vim.log.levels.INFO)
 			end)
 		end,
 	}):start()
