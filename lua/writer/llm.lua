@@ -46,6 +46,8 @@ function M.fix_selection()
 		temperature = 0.4,
 	})
 
+	require("writer.status").set_running(true)
+
 	Job:new({
 		command = "curl",
 		args = {
@@ -71,12 +73,14 @@ function M.fix_selection()
 				local ok, decoded = pcall(vim.fn.json_decode, output)
 				if not ok or not decoded or not decoded.choices then
 					vim.notify("❌ Problem processing API result", vim.log.levels.ERROR)
+					require("writer.status").set_running(false)
 					return
 				end
 
 				local reply = decoded.choices[1].message.content
 				vim.api.nvim_buf_set_lines(0, end_line, end_line, false, vim.split(reply, "\n"))
 				vim.notify("✅ Done", vim.log.levels.INFO)
+				require("writer.status").set_running(false)
 			end)
 		end,
 	}):start()
