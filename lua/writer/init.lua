@@ -3,6 +3,10 @@ local M = {}
 local api_key = os.getenv("OPENAI_API_KEY")
 local Job = require("plenary.job")
 
+-- Config
+local model = "gpt-4o-mini"
+local temperature = 0.4
+
 function M.enable_writer_mode()
 	vim.wo.wrap = true
 	vim.wo.linebreak = true
@@ -48,8 +52,8 @@ function M.correct_with_gpt(input_text, on_done)
 	vim.notify("⏳ GPT-correction started ...", vim.log.levels.INFO)
 
 	local body = vim.fn.json_encode({
-		model = "gpt-4o-mini",
-		temperature = 0.7,
+		model = model,
+		temperature = temperature,
 		messages = {
 			{
 				role = "system",
@@ -95,22 +99,17 @@ function M.correct_with_gpt(input_text, on_done)
 end
 
 function M.correct_visual_selection()
-	-- Speichere aktuelle Positionen
-	local start_pos = vim.fn.getpos("'<")
 	local end_pos = vim.fn.getpos("'>")
 
-	-- Yanke in das " Register (nur Text, kein Textobjekt ersetzen)
 	vim.cmd('normal! "vy')
 
-	-- Content aus dem Register holen
 	local input = vim.fn.getreg('"')
 	if input == "" then
-		vim.notify("⚠️ Kein Text ausgewählt", vim.log.levels.WARN)
+		vim.notify("⚠️ No text selected", vim.log.levels.WARN)
 		return
 	end
 
-	-- GPT-Funktion aufrufen
-	require("writer.gpt").correct_with_gpt(input, function(corrected)
+	M.correct_with_gpt(input, function(corrected)
 		-- ESC drücken (visuellen Modus verlassen)
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 
