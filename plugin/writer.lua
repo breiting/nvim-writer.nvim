@@ -1,9 +1,27 @@
--- Autoload setup
-vim.api.nvim_create_user_command("WriterFix", function()
-	require("writer.llm").fix_selection()
-end, { range = true })
+vim.keymap.set("n", "<leader>ww", function()
+	require("writer").toggle_writer_mode()
+end, { desc = "Toggle writer mode" })
 
--- Optional: Visual Mode Mapping
-vim.keymap.set("v", "<leader>wf", function()
-	require("writer.llm").fix_selection()
-end, { desc = "LLM: improve text", noremap = true, silent = true })
+-- conservative
+vim.keymap.set("v", "<leader>l1", function()
+	vim.cmd('normal! "vy')
+	vim.schedule(function()
+		require("writer").correct_visual_selection(0.2)
+	end)
+end, { desc = "GPT correction L1", silent = true })
+
+-- medium
+vim.keymap.set("v", "<leader>l2", function()
+	vim.cmd('normal! "vy')
+	vim.schedule(function()
+		require("writer").correct_visual_selection(0.4)
+	end)
+end, { desc = "GPT correction L2", silent = true })
+
+-- creative
+vim.keymap.set("v", "<leader>l3", function()
+	vim.cmd('normal! "vy')
+	vim.schedule(function()
+		require("writer").correct_visual_selection(0.7)
+	end)
+end, { desc = "GPT correction L3", silent = true })
