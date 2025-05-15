@@ -5,7 +5,6 @@ local Job = require("plenary.job")
 
 -- Config
 local model = "gpt-4o-mini"
-local temperature = 0.4
 
 function M.enable_writer_mode()
 	vim.wo.wrap = true
@@ -40,16 +39,24 @@ function M.toggle_writer_mode()
 	end
 end
 
---- Corrects with GPT
---- @param input_text string
---- @param on_done fun(corrected_text: string)
-function M.correct_with_gpt(input_text, on_done)
+--- GPT-based text correction with a specific temperature.
+---
+--- The `temperature` parameter controls the creativity of the response:
+---   - Low (e.g., 0.2) → precise, conservative
+---   - Medium (e.g., 0.4) → balanced
+---   - Higher (e.g., 0.7) → more stylistically free
+---
+--- @param input_text string the text which should be corrected
+--- @param temperature number the temperature for the GPT response (range: 0.0–1.0)
+--- @param on_done fun(corrected_text: string) the callback function for the result
+---
+function M.correct_with_gpt(input_text, temperature, on_done)
 	if not input_text or input_text == "" then
 		vim.notify("❌ No text available", vim.log.levels.WARN)
 		return
 	end
 
-	vim.notify("⏳ GPT-correction started ...", vim.log.levels.INFO)
+	vim.notify("⏳ GPT-correction " .. temperature .. "started ...", vim.log.levels.INFO)
 
 	local body = vim.fn.json_encode({
 		model = model,
@@ -90,15 +97,23 @@ function M.correct_with_gpt(input_text, on_done)
 
 				local result = table.concat(j:result(), "\n")
 				local data = vim.fn.json_decode(result)
-				local content = data.choices and data.choices[1].message.content or "⚠️ Keine Antwort"
-				vim.notify("✅ GPT-Korrektur abgeschlossen", vim.log.levels.INFO)
+				local content = data.choices and data.choices[1].message.content or "⚠️ No response"
 				on_done(content)
 			end)
 		end,
 	}):start()
 end
 
-function M.correct_visual_selection()
+--- Corrects the current visual selection, and inserts the corrected text below the current selection.
+---
+--- The `temperature` parameter controls the creativity of the response:
+---   - Low (e.g., 0.2) → precise, conservative
+---   - Medium (e.g., 0.4) → balanced
+---   - Higher (e.g., 0.7) → more stylistically free
+---
+--- @param temperature number the temperature for the GPT response (range: 0.0–1.0)
+---
+function M.correct_visual_selection(temperature)
 	local end_pos = vim.fn.getpos("'>")
 
 	vim.cmd('normal! "vy')
@@ -109,19 +124,19 @@ function M.correct_visual_selection()
 		return
 	end
 
-	M.correct_with_gpt(input, function(corrected)
-		-- ESC drücken (visuellen Modus verlassen)
+	M.correct_with_gpt(input, temperature, function(corrected)
+		-- ESC to leave visual mode
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 
-		-- Berechne Einfügepunkt: nach der letzten Zeile der Auswahl
+		-- take insert point after selection
 		local line_nr = end_pos[2]
 
-		-- Trenner + GPT-Antwort einfügen
+		-- add splitter and corrected text
 		local lines_to_insert = vim.split("---\n" .. corrected, "\n", { plain = true })
 
 		vim.api.nvim_buf_set_lines(0, line_nr, line_nr, false, lines_to_insert)
 
-		vim.notify("✅ GPT-Korrektur eingefügt", vim.log.levels.INFO)
+		vim.notify("✅ GPT correction done", vim.log.levels.INFO)
 	end)
 end
 
