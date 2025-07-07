@@ -25,11 +25,11 @@ vim.opt.linebreak = true
 vim.opt.wrap = true
 vim.opt.spell = true
 vim.opt.spelllang = { "de", "en" } -- Passe ggf. an
-vim.opt.textwidth = 80
-vim.opt.formatoptions:append("t")
+vim.opt.textwidth = 0              -- kein automatischer Wrap
 
 -- Optische Reduktion
-vim.opt.list = false
+vim.opt.list = true
+vim.opt.listchars:append({ eol = "↵" })
 vim.opt.fillchars:append({ eob = " " })
 
 -- Optisch angenehmes Theme
@@ -56,6 +56,8 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufEnter", "Cursor
 
 vim.api.nvim_create_autocmd("BufEnter", {
 	callback = function()
+		-- remove all format options in order to prevent from auto-wrap and inserting CR
+		vim.opt.formatoptions = vim.opt.formatoptions - "t" - "a" - "c" - "r" - "o"
 		vim.keymap.set("n", "j", "gj", { buffer = true, silent = true })
 		vim.keymap.set("n", "k", "gk", { buffer = true, silent = true })
 	end,
