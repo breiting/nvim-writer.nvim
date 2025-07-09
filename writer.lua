@@ -1,11 +1,10 @@
 -- writer.lua
 
--- Minimaler Start: keine Standard-Plugins, kein LSP
+-- No plugins, no LSP (minimal mode)
 vim.opt.swapfile = false
 vim.opt.backup = false
 vim.opt.writebackup = false
 
--- Keine Zeilennummern, keine Zeichenränder
 vim.opt.number = false
 vim.opt.relativenumber = false
 vim.opt.signcolumn = "no"
@@ -19,23 +18,24 @@ vim.opt.scrolloff = 8
 vim.opt.sidescrolloff = 8
 vim.opt.colorcolumn = ""
 vim.opt.foldcolumn = "0"
+vim.opt.clipboard = "unnamedplus" -- Sync clipboard between OS and neovim
 
--- Schönes Schreiben
+-- Nice writing experience
 vim.opt.linebreak = true
 vim.opt.wrap = true
 vim.opt.spell = true
-vim.opt.spelllang = { "de", "en" } -- Passe ggf. an
-vim.opt.textwidth = 0              -- kein automatischer Wrap
+vim.opt.spelllang = { "de", "en" }
+vim.opt.textwidth = 0 -- no automatic line wrapping
 
--- Optische Reduktion
+-- Optical reduction
 vim.opt.list = true
 vim.opt.listchars:append({ eol = "↵" })
 vim.opt.fillchars:append({ eob = " " })
 
--- Optisch angenehmes Theme
-vim.cmd("colorscheme default") -- Oder solarized/gruvbox etc., wenn du möchtest
+-- Default color scheme
+vim.cmd("colorscheme default")
 
--- Wörterzähler für Statusline
+-- Only word count in statusline
 local function update_statusline()
 	local wc = vim.fn.wordcount()
 	local count = wc["words"] or 0
@@ -62,3 +62,9 @@ vim.api.nvim_create_autocmd("BufEnter", {
 		vim.keymap.set("n", "k", "gk", { buffer = true, silent = true })
 	end,
 })
+
+vim.cmd([[
+  highlight Normal guibg=NONE ctermbg=NONE
+  highlight NormalNC guibg=NONE ctermbg=NONE
+  highlight EndOfBuffer guibg=NONE ctermbg=NONE
+]])
