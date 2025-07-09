@@ -55,6 +55,13 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufEnter", "Cursor
 })
 
 vim.api.nvim_create_autocmd("BufEnter", {
+	pattern = "*",
+	callback = function()
+		vim.o.colorcolumn = ""
+	end,
+})
+
+vim.api.nvim_create_autocmd("BufEnter", {
 	callback = function()
 		-- remove all format options in order to prevent from auto-wrap and inserting CR
 		vim.opt.formatoptions = vim.opt.formatoptions - "t" - "a" - "c" - "r" - "o"
